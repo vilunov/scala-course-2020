@@ -47,10 +47,3 @@ object Random {
   def between(left: Int, right: Int): Int =
     random.between(left, right)
 }
-
-class RoundRobin[T](items: Seq[T]) {
-  require(items.nonEmpty)
-  private val infiniteStream = LazyList.continually(items.to(LazyList)).flatten
-
-  def next(): T = infiniteStream.take(1).toList(0)
-}

@@ -47,7 +47,7 @@ object Customer {
   def waitForEat: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case Eat(CookedOrder(myId, food)) =>
-        ctx.log.info(s"Now eating. My useless number is $myId, food is $food")
+        ctx.log.info(s"Now eating. Useless for me number on platter is $myId, food is $food")
         ctx.scheduleOnce(1.second, ctx.self, Leave)
         waitToLeave
       case _ => Behaviors.same
