@@ -17,22 +17,22 @@ object Cafe {
 
   case object CustomerLeave extends Command
 
-  def apply(): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
+  def apply(conf: ServiceConf): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case Start =>
-        val pool = Routers.pool(poolSize = 3)(Chef())
-        val router = ctx.spawn(pool, "Chef-pool")
+        val pool = Routers.pool(poolSize = conf.chefsNum)(Chef(conf.chefConf))
+        val chefRouter = ctx.spawn(pool, "Chef-pool")
 
-        val waiter = ctx.spawn(Waiter(router), "Waiter")
+        val waiter = ctx.spawn(Waiter(chefRouter, conf.waiterConf), "Waiter")
         val menu = Menu(List(Khinkali(Beef, _), Khinkali(CheeseAndMushrooms, _), Khinkali(Mutton, _)))
-        // TODO: parametrise
-        val customers = (1 to 10).map { i => ctx.spawn(Customer(waiter, menu), s"Customer$i") }
+        val customers = (1 to conf.customersNum).map { i => ctx.spawn(Customer(waiter, menu), s"Customer$i") }
 
         customers.foreach { c =>
-          c ! Customer.Start
+          c ! Customer.Start(conf.customerConf)
           ctx.watchWith(c, CustomerLeave)
         }
         waitTillAllEat(System.nanoTime(), customers.length)
+      case _ => Behaviors.same
     }
   }
 
@@ -48,6 +48,7 @@ object Cafe {
             }
             else
               waitTillAllEat(startTime, newCounter)
+          case _ => Behaviors.same
         }
     }
 }

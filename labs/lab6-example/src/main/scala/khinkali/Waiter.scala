@@ -19,22 +19,21 @@ object Waiter {
 
   case object Continue extends Command
 
-  implicit val timeout: Timeout = Timeout(1.second)
+  def apply(chefs: ActorRef[Chef.Command], conf: WaiterConf): Behavior[Command] =
+    loop(chefs, Map[Int, ActorRef[Customer.Command]](), 0, conf)
 
-  def apply(chefs: ActorRef[Chef.Command]): Behavior[Command] =
-    loop(chefs, Map[Int, ActorRef[Customer.Command]](), 0)
-
-  def loop(chefs: ActorRef[Chef.Command], returnMapping: Map[Int, ActorRef[Customer.Command]], counter: Int): Behavior[Command] = Behaviors.receive {
+  def loop(chefs: ActorRef[Chef.Command], returnMapping: Map[Int, ActorRef[Customer.Command]], counter: Int, conf: WaiterConf): Behavior[Command] = Behaviors.receive {
     (ctx, msg) =>
+
+      implicit val timeout: Timeout = Timeout(conf.chefRespondTimeout.second)
       msg match {
         case ReceiveOrder(order, backRef) =>
           val chefsOrder = order.toOrder(counter)
           ctx.log.info(s"Order #${chefsOrder.orderId} from customer ${backRef.path.name} registered.")
           ctx.self ! SubmitOrderToChef(chefsOrder)
           // register order - return updated self state
-          loop(chefs, returnMapping.updated(counter, backRef), counter + 1)
+          loop(chefs, returnMapping.updated(counter, backRef), counter + 1, conf)
         case SubmitOrderToChef(chefsOrder: Order) =>
-          implicit val timeout: Timeout = Timeout(1.second)
           ctx.ask(chefs, Chef.TakeOrder(chefsOrder, ctx.self, _: ActorRef[Result])) {
             case Success(Result.Ok) =>
               ctx.log.info(s"Order #${chefsOrder.orderId} accepted.")
@@ -42,7 +41,7 @@ object Waiter {
             case Success(Result.Busy) =>
               ctx.log.info(s"Selected Chef is busy. Try next.")
               // To overcome flooding/ddos
-              ctx.scheduleOnce(1.second, ctx.self, SubmitOrderToChef(chefsOrder))
+              ctx.scheduleOnce(conf.resendTimeout.second, ctx.self, SubmitOrderToChef(chefsOrder))
               Continue
             case Failure(exception) =>
               ctx.log.error(exception.getMessage)
@@ -57,7 +56,7 @@ object Waiter {
               ref ! Customer.Eat(order)
             case _ => ctx.log.error(s"Order #${order.orderId} cooked but receiver customer not found.")
           }
-          loop(chefs, returnMapping.removed(order.orderId), counter)
+          loop(chefs, returnMapping.removed(order.orderId), counter, conf)
       }
   }
 

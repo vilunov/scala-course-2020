@@ -24,11 +24,12 @@ object Stuffing {
 
 }
 
-sealed case class Menu(menu: List[Int => Khinkali]) {
-  def apply(menu: List[Int => Khinkali]): Menu = {
-    require(menu.nonEmpty)
-    Menu(menu)
+case class Menu(menu: List[Int => Khinkali]) {
+  def apply(i: Int): Int => Khinkali = {
+    menu(i)
   }
+
+  def length(): Int = menu.length
 }
 
 sealed trait Result
@@ -41,9 +42,28 @@ object Result {
 
 }
 
-object Random {
+object MyRandom {
+  // implicits sucked here :c
   private val random = new Random(42) // TODO: change to parameter
 
   def between(left: Int, right: Int): Int =
-    random.between(left, right)
+    if (left == right)
+      right
+    else
+      random.between(left, right)
+
+  def between(range: IntRange): Int = {
+    if (range.left == range.right)
+      range.right
+    else
+      random.between(range.left, range.right)
+  }
+
+  def between(range: DoubleRange): Double = {
+    if (range.left == range.right)
+      range.right
+    else
+      random.between(range.left, range.right)
+  }
+
 }

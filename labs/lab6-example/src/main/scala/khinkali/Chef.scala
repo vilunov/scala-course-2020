@@ -15,29 +15,29 @@ object Chef {
 
   case class FinishOrder(order: Order) extends Command
 
-  def apply(): Behavior[Command] =
-    freeState()
+  def apply(conf: ChefConf): Behavior[Command] =
+    freeState(conf)
 
-  def freeState(): Behavior[Command] = Behaviors.receive {
+  def freeState(conf: ChefConf): Behavior[Command] = Behaviors.receive {
     (ctx, msg) =>
       msg match {
         case TakeOrder(order, orderReceiver, replyTo) =>
           // notify chefself when he will finish cooking
-          ctx.scheduleOnce(1.second, ctx.self, FinishOrder(order)) // TODO
+          ctx.scheduleOnce(MyRandom.between(conf.cookingTimeRange).second, ctx.self, FinishOrder(order))
           replyTo ! Ok
           ctx.log.info(s"Accepted order #${order.orderId}. Now I'm busy!")
-          busyState(orderReceiver)
+          busyState(orderReceiver, conf)
         case _ => Behaviors.same
       }
   }
 
-  def busyState(waiter: ActorRef[Waiter.Command]): Behavior[Command] = Behaviors.receive {
+  def busyState(waiter: ActorRef[Waiter.Command], conf: ChefConf): Behavior[Command] = Behaviors.receive {
     (ctx, msg) => {
       msg match {
         case FinishOrder(order) =>
           ctx.log.info(s"Order #${order.orderId} cooked.")
           waiter ! Waiter.DeliverOrder(CookedOrder(order.orderId, order.dishes))
-          freeState()
+          freeState(conf)
         case TakeOrder(order, _, replyTo) =>
           replyTo ! Busy
           ctx.log.info(s"Can't accept order #${order.orderId}. I'm still busy!")
