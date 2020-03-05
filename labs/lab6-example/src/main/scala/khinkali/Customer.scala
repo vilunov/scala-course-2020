@@ -6,20 +6,28 @@ import akka.actor.typed.scaladsl.Behaviors
 import scala.concurrent.duration._
 
 object Customer {
+
   sealed trait Command
 
   case object Start extends Command
+
   case class LeaveOrder(order: CustomerOrder) extends Command
-  case object Eat extends Command
+
+  case class Eat(cookedOrder: CookedOrder) extends Command
+
   case object Leave extends Command
 
-  def apply(waiter: ActorRef[Waiter.Command], order: CustomerOrder): Behavior[Command] =
-    start(order, waiter)
+  def apply(waiter: ActorRef[Waiter.Command], menu: Menu): Behavior[Command] =
+    start(menu, waiter)
 
-  def start(order: CustomerOrder, waiter: ActorRef[Waiter.Command]): Behavior[Command] =
+  def pickRandomDish(menu: Menu): CustomerOrder = // TODO: add parameters
+    CustomerOrder(List(menu.menu(Random.between(0, menu.menu.length))(Random.between(1, 10))))
+
+  def start(menu: Menu, waiter: ActorRef[Waiter.Command]): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Start =>
+          val order = pickRandomDish(menu)
           ctx.scheduleOnce(1.second, ctx.self, LeaveOrder(order))
           leaveOrder(waiter)
         case _ => Behaviors.same
@@ -30,7 +38,7 @@ object Customer {
     msg match {
       case LeaveOrder(order) =>
         ctx.log.info(s"Leaving order $order")
-        waiter ! ???
+        waiter ! Waiter.ReceiveOrder(order, ctx.self)
         waitForEat
       case _ => Behaviors.same
     }
@@ -38,8 +46,8 @@ object Customer {
 
   def waitForEat: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {
-      case Eat =>
-        ctx.log.info(s"Now eating")
+      case Eat(CookedOrder(myId, food)) =>
+        ctx.log.info(s"Now eating. My useless number is $myId, food is $food")
         ctx.scheduleOnce(1.second, ctx.self, Leave)
         waitToLeave
       case _ => Behaviors.same
