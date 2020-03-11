@@ -20,3 +20,4 @@ object Result {
   case object Ok extends Result
   case object Busy extends Result
 }
+
