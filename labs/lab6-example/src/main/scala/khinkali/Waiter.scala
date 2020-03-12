@@ -5,7 +5,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.util.Timeout
 
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 
 object Waiter {
 
@@ -27,12 +27,16 @@ object Waiter {
 
   implicit val timeout: Timeout = Timeout(1.second)
 
-  def apply(chefs: Seq[ActorRef[Chef.Command]]): Behavior[Command] =
+  def apply(chefs: Seq[ActorRef[Chef.Command]],
+            rng: Random): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
-        case Start => processOrders(chefs, 1)
+        case Start => processOrders(chefs, 1, rng)
         case _ =>
-          new Exception(
+          throw new Exception(
+            "Message other than START arrived at uninitialized Waiter"
+          )
+          ctx.log.error(
             "Message other than START arrived at uninitialized Waiter"
           )
           Behaviors.same
@@ -40,7 +44,8 @@ object Waiter {
     }
 
   def processOrders(chefs: Seq[ActorRef[Chef.Command]],
-                    ordernum: Int): Behavior[Command] = Behaviors.receive {
+                    ordernum: Int,
+                    rng: Random): Behavior[Command] = Behaviors.receive {
     (ctx, msg) =>
       msg match {
         case Order(order, client) =>
@@ -60,11 +65,11 @@ object Waiter {
               val id = ord.orderId
               Processed
           }
-          processOrders(chefs, ordernum + 1)
+          processOrders(chefs, ordernum + 1, rng)
         case Retry(order, client, chefsLeft) =>
           if (chefsLeft.isEmpty) {
             ctx.scheduleOnce(
-              Config.rng.between(3, 5).seconds,
+              rng.between(3, 5).seconds,
               ctx.self,
               Retry(order, client, chefs)
             )
@@ -92,7 +97,9 @@ object Waiter {
           client ! Customer.Eat
           Behaviors.same
         case Start =>
-          println("Got a START message while already started. Very strange...")
+          ctx.log.error(
+            "Got a START message while already started. Very strange..."
+          )
           Behaviors.same
       }
   }

@@ -1,20 +1,16 @@
 package khinkali
 
-import com.typesafe.config.ConfigFactory
+import pureconfig._
+import pureconfig.generic.auto._
 
-import scala.util.Random
+case class Range(from: Double, to: Double)
 
-case class CustomerConfig(N: Int,
-                          order: (Double, Double),
-                          eat: (Double, Double))
+case class CustomerConfig(n: Int, order: Range, eat: Range)
 
-case class ChefConfig(N: Int,
-                      beef: (Double, Double),
-                      mutton: (Double, Double),
-                      cheese: (Double, Double))
+case class ChefConfig(n: Int, beef: Range, mutton: Range, cheese: Range)
 
-object Config {
-  private val cfg = ConfigFactory.load("application")
+case class Config(customers: CustomerConfig, chefs: ChefConfig, seed: Long)
+/*private val cfg = ConfigFactory.load("application")
   val rng: Random = new Random(cfg.getLong("seed"))
   val chefConfig: ChefConfig = ChefConfig(
     cfg.getInt("chefs.N"),
@@ -29,5 +25,4 @@ object Config {
       cfg.getDouble("customers.order.to")
     ),
     (cfg.getDouble("customers.eat.from"), cfg.getDouble("customers.eat.to"))
-  )
-}
+  )*/

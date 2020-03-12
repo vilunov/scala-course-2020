@@ -4,6 +4,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 
 import scala.concurrent.duration._
+import scala.util.Random
 
 object Customer {
   sealed trait Command
@@ -14,45 +15,53 @@ object Customer {
   case object Leave extends Command
 
   def apply(waiter: ActorRef[Waiter.Command],
-            order: CustomerOrder): Behavior[Command] =
-    start(order, waiter)
+            order: CustomerOrder,
+            cfg: Config,
+            rng: Random): Behavior[Command] =
+    start(order, waiter, cfg, rng)
 
   def start(order: CustomerOrder,
-            waiter: ActorRef[Waiter.Command]): Behavior[Command] =
+            waiter: ActorRef[Waiter.Command],
+            cfg: Config,
+            rng: Random): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Start(value) =>
-          val range = Config.customerConfig.order
+          val range = cfg.customers.order
           ctx.scheduleOnce(
-            Config.rng.between(range._1, range._2).seconds,
+            rng.between(range.from, range.to).seconds,
             ctx.self,
             LeaveOrder(order)
           )
-          leaveOrder(waiter, value)
+          leaveOrder(waiter, value, cfg, rng)
         case _ => Behaviors.same
       }
     }
 
   def leaveOrder(waiter: ActorRef[Waiter.Command],
-                 cafe: ActorRef[Cafe.Callback.type]): Behavior[Command] =
+                 cafe: ActorRef[Cafe.Callback.type],
+                 cfg: Config,
+                 rng: Random): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case LeaveOrder(order) =>
           ctx.log.info(s"Leaving order $order")
           waiter ! Waiter.Order(order, ctx.self)
-          waitForEat(cafe)
+          waitForEat(cafe, cfg, rng)
         case _ => Behaviors.same
       }
     }
 
-  def waitForEat(cafe: ActorRef[Cafe.Callback.type]): Behavior[Command] =
+  def waitForEat(cafe: ActorRef[Cafe.Callback.type],
+                 cfg: Config,
+                 rng: Random): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Eat =>
           ctx.log.info(s"Now eating")
-          val range = Config.customerConfig.eat
+          val range = cfg.customers.eat
           ctx.scheduleOnce(
-            Config.rng.between(range._1, range._2).seconds,
+            rng.between(range.from, range.to).seconds,
             ctx.self,
             Leave
           )
