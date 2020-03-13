@@ -9,9 +9,9 @@ import scala.concurrent.duration._
 import scala.util.Random
 
 class ChefSpec extends AnyFlatSpec {
+  val rngesus = new Random(1)
 
   "Chef" should "Take orders" in {
-    val rngesus = new Random(1) // same randomness every time
     val behaviourKit = BehaviorTestKit(Chef(rngesus, CookingTime(1, 0)))
 
     val testWaiter = TestInbox[Result]()
@@ -26,7 +26,6 @@ class ChefSpec extends AnyFlatSpec {
   }
 
   "Chef" should "Send orders" in {
-    val rngesus = new Random(1) // same randomness every time
     val behaviourKit = BehaviorTestKit(Chef(rngesus, CookingTime(1, 0)))
 
     val testWaiter = TestInbox[Result]()
@@ -42,7 +41,6 @@ class ChefSpec extends AnyFlatSpec {
   }
 
   "Chef" should "Decline orders" in {
-    val rngesus = new Random(1) // same randomness every time
     val behaviourKit = BehaviorTestKit(Chef(rngesus, CookingTime(1, 0)))
 
     val testWaiter = TestInbox[Result]()

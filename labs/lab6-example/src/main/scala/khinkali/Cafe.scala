@@ -6,8 +6,6 @@ import akka.actor.typed.scaladsl.Behaviors
 import scala.util.Random
 import scala.concurrent.duration._
 
-// TODO: System should report the overall taken time to process all customers
-
 object Cafe {
 
   sealed trait Command
@@ -18,7 +16,6 @@ object Cafe {
   var remainingCustomers: Int = _
 
   var startupTime: Long = _
-
 
   var rngesus: Random = _
 

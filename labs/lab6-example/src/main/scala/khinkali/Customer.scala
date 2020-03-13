@@ -28,7 +28,7 @@ object Customer {
   def apply(cafe: ActorRef[Cafe.CustomerTerminated.type], waiter: ActorRef[Waiter.Command],
             order: CustomerOrder,
             rng: Random, stcfg: SelectingTime, etcfg: EatingTime): Behavior[Command] = {
-    // я знаю что это надо сделать отдельным классом с конструктором но мне так впадлу если честно 2 часа ночи
+    // я знаю что это надо сделать отдельным классом с конструктором но мне так лень если честно 2 часа ночи
     this.cafe = cafe
     rngesus = rng
     avgSelectingTime = stcfg.avg

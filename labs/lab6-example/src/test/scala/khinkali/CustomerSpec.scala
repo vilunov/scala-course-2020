@@ -29,7 +29,7 @@ class CustomerSpec extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
 
   }
 
-  /*
+  /* Ne rabotaet ((99999
   "Customer" should "Eat then leave" in {
     val order = CustomerOrder(List())
     val testWaiter = testKit.createTestProbe[Waiter.Command]()
