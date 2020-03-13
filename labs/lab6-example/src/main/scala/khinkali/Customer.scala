@@ -30,7 +30,7 @@ object Customer {
     msg match {
       case LeaveOrder(order) =>
         ctx.log.info(s"Leaving order $order")
-        waiter ! ???
+        waiter ! Waiter.TakeOrder(order, ctx.self)
         waitForEat
       case _ => Behaviors.same
     }
