@@ -1,24 +1,47 @@
 package khinkali
 
+import java.time._
+import java.time.temporal._
+
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 
+import scala.util.Random
+
 object Cafe {
   sealed trait Command
-  case object Start extends Command
+  case object Start      extends Command
+  case object Terminated extends Command
 
-  def apply(): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
-    msg match {
-      case Start =>
-        val waiter = ctx.spawn(Waiter(), "Waiter")
-        val customers = (1 to 10).map { i => ctx.spawn(Customer(waiter, CustomerOrder(List(Khinkali(Stuffing.Beef, 10)))), s"Customer$i")}
+  def apply(config: CafeConfig): Behavior[Command] =
+    run(LocalDateTime.now(), config, config.numCustomers)
 
-        waiter ! ???
+  def run(started: LocalDateTime, config: CafeConfig, leftCustomers: Int): Behavior[Command] =
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
+        case Start =>
+          val random = new Random(config.seed)
+          val waiter = ctx.spawn(Waiter(), "Waiter")
+          val chefs = (1 to config.numChefs).map { i =>
+            ctx.spawn(Chef(waiter, random.nextLong(), config.chef), s"Chef$i")
+          }
+          val customers = (1 to config.numCustomers).map { i =>
+            ctx.spawn(Customer(waiter, random.nextLong(), config.customer), s"Customer$i")
+          }
 
-        customers.foreach { c =>
-          c ! Customer.Start
-        }
-        Behaviors.same
+          waiter ! Waiter.Start(chefs.toList)
+          customers.foreach { c => ctx.watchWith(c, Terminated) }
+          customers.foreach { c => c ! Customer.Start }
+          Behaviors.same
+        case Terminated =>
+          leftCustomers match {
+            case x if x <= 1 =>
+              val time = started.until(LocalDateTime.now(), ChronoUnit.SECONDS)
+              ctx.log.info(s"All customers left, took $time seconds")
+              Behaviors.stopped
+            case _ => run(started, config, leftCustomers - 1)
+          }
+      }
     }
-  }
+
 }

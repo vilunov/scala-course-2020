@@ -4,55 +4,88 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 
 import scala.concurrent.duration._
+import scala.util.Random
 
-object Customer {
-  sealed trait Command
+class Customer(val waiter: ActorRef[Waiter.Command], val config: CustomerConfig) {
 
-  case object Start extends Command
-  case class LeaveOrder(order: CustomerOrder) extends Command
-  case object Eat extends Command
-  case object Leave extends Command
-
-  def apply(waiter: ActorRef[Waiter.Command], order: CustomerOrder): Behavior[Command] =
-    start(order, waiter)
-
-  def start(order: CustomerOrder, waiter: ActorRef[Waiter.Command]): Behavior[Command] =
+  def start(random: Random): Behavior[Customer.Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
-        case Start =>
-          ctx.scheduleOnce(1.second, ctx.self, LeaveOrder(order))
-          leaveOrder(waiter)
+        case Customer.Start =>
+          val order = Customer.generateOrder(random, config)
+          val time  = Utils.randomRange(random, config.orderingTime)
+          ctx.scheduleOnce(time.second, ctx.self, Customer.LeaveOrder(order))
+          leaveOrder(random)
         case _ => Behaviors.same
       }
     }
 
-  def leaveOrder(waiter: ActorRef[Waiter.Command]): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
-    msg match {
-      case LeaveOrder(order) =>
-        ctx.log.info(s"Leaving order $order")
-        waiter ! ???
-        waitForEat
-      case _ => Behaviors.same
+  def leaveOrder(random: Random): Behavior[Customer.Command] =
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
+        case Customer.LeaveOrder(order) =>
+          ctx.log.info(s"Leaving order $order")
+          waiter ! Waiter.TakeOrder(ctx.self, order)
+          waitForEat(random)
+        case _ => Behaviors.same
+      }
     }
-  }
 
-  def waitForEat: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
-    msg match {
-      case Eat =>
-        ctx.log.info(s"Now eating")
-        ctx.scheduleOnce(1.second, ctx.self, Leave)
-        waitToLeave
-      case _ => Behaviors.same
+  def waitForEat(random: Random): Behavior[Customer.Command] =
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
+        case Customer.Eat =>
+          ctx.log.info(s"Now eating")
+          val time = Utils.randomRange(random, config.eatingTime)
+          ctx.scheduleOnce(time.second, ctx.self, Customer.Leave)
+          waitToLeave
+        case _ => Behaviors.same
+      }
     }
-  }
 
-  def waitToLeave: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
-    msg match {
-      case Leave =>
-        ctx.log.info(s"Now leaving")
-        Behaviors.stopped
-      case _ => Behaviors.same
+  def waitToLeave: Behavior[Customer.Command] =
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
+        case Customer.Leave =>
+          ctx.log.info(s"Now leaving")
+          Behaviors.stopped
+        case _ => Behaviors.same
+      }
     }
+}
+
+object Customer {
+  sealed trait Command
+
+  case object Start                           extends Command
+  case class LeaveOrder(order: CustomerOrder) extends Command
+  case object Eat                             extends Command
+  case object Leave                           extends Command
+
+  def apply(
+      waiter: ActorRef[Waiter.Command],
+      seed: Long,
+      config: CustomerConfig
+  ): Behavior[Command] =
+    new Customer(waiter, config).start(new Random(seed))
+
+  def generateOrder(random: Random, config: CustomerConfig): CustomerOrder = {
+    val diff      = config.numDishes.end - config.numDishes.start + 1
+    val numDishes = config.numDishes.start + random.nextInt(diff)
+    CustomerOrder(
+      (1 to numDishes)
+        .map(_ => {
+          val diff       = config.dishAmount.end - config.dishAmount.start + 1
+          val dishAmount = config.dishAmount.start + random.nextInt(diff)
+          val stuff      = random.nextInt(3)
+          stuff match {
+            case 0 => Khinkali(Stuffing.Beef, dishAmount)
+            case 1 => Khinkali(Stuffing.Mutton, dishAmount)
+            case _ => Khinkali(Stuffing.CheeseAndMushrooms, dishAmount)
+          }
+        })
+        .toList
+    )
   }
 
 }
