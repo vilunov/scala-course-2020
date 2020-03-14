@@ -3,46 +3,25 @@ package khinkali
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import khinkali.Cafe.CustomerTerminated
+import khinkali.Customer._
 import khinkali.Waiter.TakeOrder
 
 import scala.concurrent.duration._
 import scala.util.Random
 
-object Customer {
+class Customer(
+  val waiter: ActorRef[Waiter.Command],
+  val cafe: ActorRef[Cafe.CustomerTerminated.type],
+  val rngesus: Random,
+  val config: CustomerConfig) {
 
-  sealed trait Command
-
-  case object Start extends Command
-  case class LeaveOrder(order: CustomerOrder) extends Command
-  case object Eat extends Command
-  case object Leave extends Command
-
-  var rngesus: Random = _
-  var avgSelectingTime: Int = _
-  var varSelectingTime: Int = _
-  var avgEatingTime: Int = _
-  var varEatingTime: Int = _
-
-  var cafe: ActorRef[Cafe.CustomerTerminated.type] = _
-
-  def apply(cafe: ActorRef[Cafe.CustomerTerminated.type], waiter: ActorRef[Waiter.Command],
-            order: CustomerOrder,
-            rng: Random, stcfg: SelectingTime, etcfg: EatingTime): Behavior[Command] = {
-    // я знаю что это надо сделать отдельным классом с конструктором но мне так лень если честно 2 часа ночи
-    this.cafe = cafe
-    rngesus = rng
-    avgSelectingTime = stcfg.avg
-    varSelectingTime = stcfg.varia
-    avgEatingTime = etcfg.avg
-    varEatingTime = etcfg.varia
-    start(order, waiter)
-  }
-
-  def start(order: CustomerOrder, waiter: ActorRef[Waiter.Command]): Behavior[Command] =
+  def start(order: CustomerOrder): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Start =>
-          val selectingTimeThisTime = avgSelectingTime + math.round(varSelectingTime * (rngesus.nextGaussian() - 0.5f))
+          val selectingTimeThisTime = config.selectingTime.avg
+            + math.round(config.selectingTime.varia
+            * (rngesus.nextGaussian() - 0.5f))
           ctx.scheduleOnce(selectingTimeThisTime.second, ctx.self, LeaveOrder(order))
           leaveOrder(waiter)
         case _ => Behaviors.same
@@ -63,7 +42,7 @@ object Customer {
     msg match {
       case Eat =>
         ctx.log.info(s"Now eating")
-        val eatingTimeThisTime = avgEatingTime + math.round(varEatingTime * (rngesus.nextGaussian() - 0.5f))
+        val eatingTimeThisTime = config.eatingTime.avg + math.round(config.eatingTime.avg * (rngesus.nextFloat() - 0.5f))
         ctx.scheduleOnce(eatingTimeThisTime.second, ctx.self, Leave)
         waitToLeave
       case _ => Behaviors.same
@@ -79,5 +58,44 @@ object Customer {
       case _ => Behaviors.same
     }
   }
+}
+
+object Customer {
+
+  sealed trait Command
+
+  case object Start extends Command
+  case class LeaveOrder(order: CustomerOrder) extends Command
+  case object Eat extends Command
+  case object Leave extends Command
+
+
+  def apply(seed: Int, waiter: ActorRef[Waiter.Command], cafe: ActorRef[Cafe.CustomerTerminated.type],
+            config: CustomerConfig, orderConfig: OrderConfig): Behavior[Command] = {
+
+    val rngesus = new Random(seed)
+    // generate an order
+    val nDishes = orderConfig.orderedDishes.avg
+      + math.round(orderConfig.orderedDishes.varia
+      * (rngesus.nextFloat() - 0.5f)).toInt
+
+    val order = (1 to nDishes).map {
+      _ => {
+        val stuffing = rngesus.nextInt().abs % 3 match {
+          case 0 => Stuffing.Beef
+          case 1 => Stuffing.CheeseAndMushrooms
+          case 2 => Stuffing.Mutton
+        }
+        val amount = orderConfig.khinkalisInDish.avg
+          + math.round(orderConfig.khinkalisInDish.varia * (rngesus.nextFloat() - 0.5f))
+
+        Khinkali(stuffing, amount)
+      }
+    }.toList
+
+    // start a customer
+    new Customer(waiter, cafe, rngesus, config).start(CustomerOrder(order))
+  }
+
 
 }

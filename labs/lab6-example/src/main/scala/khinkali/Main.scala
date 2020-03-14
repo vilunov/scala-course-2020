@@ -10,16 +10,25 @@ case class EatingTime(avg: Int, varia: Int)
 case class OrderedDishes(avg: Int, varia: Int)
 case class KhinkalisInDish(avg: Int, varia: Int)
 
+case class CustomerConfig(
+  selectingTime: SelectingTime,
+  eatingTime: EatingTime,
+)
+
+case class OrderConfig(
+  orderedDishes: OrderedDishes,
+  khinkalisInDish: KhinkalisInDish
+)
+
 case class cafeConf(
   randomSeed: Int,
   nCustomers: Int,
   nChefs: Int,
 
   cookingTime: CookingTime,
-  selectingTime: SelectingTime,
-  eatingTime: EatingTime,
-  orderedDishes: OrderedDishes,
-  khinkalisInDish: KhinkalisInDish
+
+  customerConfig: CustomerConfig,
+  orderConfig: OrderConfig
 )
 
 object Main extends App {

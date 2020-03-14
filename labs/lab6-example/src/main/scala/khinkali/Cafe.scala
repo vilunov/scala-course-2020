@@ -13,57 +13,33 @@ object Cafe {
   case object Start extends Command
   case object CustomerTerminated extends Command
 
+  val startupTime: Long = System.currentTimeMillis()
+
   var remainingCustomers: Int = _
-
-  var startupTime: Long = _
-
-  var rngesus: Random = _
 
   def apply(cafeConf: cafeConf): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case Start =>
-        rngesus = new Random(cafeConf.randomSeed)
+        val rngesus = new Random(cafeConf.randomSeed)
 
         val chefs = (1 to cafeConf.nChefs).map {
-          i => ctx.spawn(Chef(rngesus, cafeConf.cookingTime), s"Chef$i")
+          i => ctx.spawn(Chef(rngesus.nextInt(), cafeConf.cookingTime), s"Chef$i")
         }
         val waiter = ctx.spawn(Waiter(chefs), "Waiter")
         remainingCustomers = cafeConf.nCustomers
         val customers = (1 to cafeConf.nCustomers).map {
           i => {
-            // generate orders
-            val nDishes = cafeConf.orderedDishes.avg
-                + math.round(cafeConf.orderedDishes.varia
-                * (rngesus.nextGaussian() - 0.5f)).toInt
-
-            val order = (1 to nDishes).map {
-              _ => {
-                val stuffing = rngesus.nextInt().abs % 3 match {
-                  case 0 => Stuffing.Beef
-                  case 1 => Stuffing.CheeseAndMushrooms
-                  case 2 => Stuffing.Mutton
-                }
-                val amount = cafeConf.khinkalisInDish.avg
-                          + math.round(cafeConf.khinkalisInDish.varia
-                          * (rngesus.nextGaussian() - 0.5f)).toInt
-                Khinkali(stuffing, amount)
-              }
-            }.toList
-            ctx.spawn(Customer(
-              ctx.self,
-              waiter, CustomerOrder(order),
-              rngesus,
-              cafeConf.selectingTime, cafeConf.eatingTime
-            ), s"Customer$i")
+            ctx.spawn(
+              Customer(rngesus.nextInt(), waiter, ctx.self, cafeConf.customerConfig, cafeConf.orderConfig),
+              s"Customer$i"
+            )
           }
         }
 
-        startupTime = System.currentTimeMillis()
 
-        customers.foreach { c =>
-          c ! Customer.Start
-        }
+        customers.foreach { c => c ! Customer.Start }
         Behaviors.same
+
       case CustomerTerminated => // идея заоперсурсена у данилы
         remainingCustomers -= 1
         if (remainingCustomers == 0) {

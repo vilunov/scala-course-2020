@@ -22,28 +22,29 @@ class CustomerSpec extends AnyFlatSpec with BeforeAndAfterAll with Matchers {
     val testWaiter = testKit.createTestProbe[Waiter.Command]()
     val cafeInbox = testKit.createTestProbe[Cafe.Command]()
     val customer = testKit.spawn(
-      Customer(cafeInbox.ref, testWaiter.ref, order, rngesus, SelectingTime(1, 0), EatingTime(1, 0)), "customer"
+      Customer(0, testWaiter.ref, cafeInbox.ref,
+        CustomerConfig(SelectingTime(1, 0), EatingTime(1, 0)),
+        OrderConfig(OrderedDishes(0, 0), KhinkalisInDish(0, 0))),
+      "customer"
     )
     customer ! Customer.Start
     testWaiter.expectMessage(Waiter.TakeOrder(customer.ref, order))
 
   }
 
-  /* Ne rabotaet ((99999
   "Customer" should "Eat then leave" in {
     val order = CustomerOrder(List())
     val testWaiter = testKit.createTestProbe[Waiter.Command]()
     val cafeInbox = testKit.createTestProbe[Cafe.Command]()
     val customer = testKit.spawn(
-      Customer(cafeInbox.ref, testWaiter.ref, order, rngesus, SelectingTime(0, 0), EatingTime(0, 0)),
+      new Customer(testWaiter.ref, cafeInbox.ref, new Random(0),
+        CustomerConfig(SelectingTime(1, 0), EatingTime(1, 0))
+      ).waitForEat,
       "customer2"
     )
-
-    customer ! Customer.Start
 
     customer ! Customer.Eat
 
     cafeInbox.expectTerminated(customer)
   }
-  */
 }

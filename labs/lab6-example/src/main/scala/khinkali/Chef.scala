@@ -12,37 +12,28 @@ object Chef {
   case class TakeOrder(order: Order, replyTo: ActorRef[Result], customer: ActorRef[Customer.Eat.type]) extends Command
   case class FinishOrder(orderId: Int, customer: ActorRef[Customer.Eat.type]) extends Command
 
-  var rngesus: Random = _
-  var avgCookingTime: Int = _
-  var varCookingTime: Int = _
-
-  def apply(rng: Random, cfg: CookingTime): Behavior[Command] = {
-    rngesus = rng
-    avgCookingTime = cfg.avg
-    varCookingTime = cfg.varia
-    waitForOrder
+  def apply(seed: Int, cfg: CookingTime): Behavior[Command] = {
+    val rngesus: Random = new Random(seed)
+    waitForOrder(rngesus, cfg)
   }
 
-  def waitForOrder: Behavior[Command] =
+  def waitForOrder(rngesus: Random, cfg: CookingTime): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case TakeOrder(order, replyTo, customer) =>
           ctx.log.info(s"Taking order ${order.orderId}")
           replyTo ! Result.Ok
-          // У меня проблема с тем что Шеф по сути весь батч хинкалей готовит за один раз
-          // Т.е. даже если там 100 разных вариаций порций, он всё равно всё разом бахнет и отдаст
-          // Мне лень переделывать если честно так спать хочу госпаде
           // cooking time can vary from (avgCookingTime - 0.5 * varCookingTime) to (avgCookingTime + 0.5 * varCookingTime)
-          val cookingTimeThisTime = avgCookingTime + math.round(varCookingTime * (rngesus.nextGaussian() - 0.5f))
+          val cookingTimeThisTime = cfg.avg + math.round(cfg.varia * (rngesus.nextFloat() - 0.5f))
           ctx.scheduleOnce(cookingTimeThisTime.second, ctx.self, FinishOrder(order.orderId, customer))
-          cookOrder
+          cookOrder(rngesus, cfg)
 
         case _ => Behaviors.same // keep cooking
 
       }
     }
 
-  def cookOrder: Behavior[Command] =
+  def cookOrder(rngesus: Random, cfg: CookingTime): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case TakeOrder(_, replyTo, _) =>
@@ -52,7 +43,7 @@ object Chef {
         case FinishOrder(orderId, customer) =>
           ctx.log.info(s"Finished Order $orderId")
           customer ! Customer.Eat
-          waitForOrder
+          waitForOrder(rngesus, cfg)
 
         case _ => Behaviors.same // keep cooking
 
