@@ -19,7 +19,7 @@ class CounterSpec extends AnyFlatSpec with Matchers {
     val kit = BehaviorTestKit(Counter())
     for { _ <- 0 until 10 } kit.run(Counter.Increment)
     kit.run(Counter.Retrieve(inbox.ref))
-    val messages = inbox.receiveAll()
+    val messages = inbox.receiveMessage()
     messages shouldEqual 10
   }
 
