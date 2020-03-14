@@ -25,7 +25,7 @@ class InstantMetricsSpec extends AnyFlatSpec with Matchers with OptionValues {
   }
 
   "compute" should "produce correct metrics on shuffled data" in {
-    val insM = InstantMetrics.compute(shuffledEntry, 100)
+    val insM = InstantMetrics.compute(100)(shuffledEntry)
     insM.timestamp shouldEqual shuffledEntry.timestamp
     insM.symbol shouldEqual shuffledEntry.symbol
     insM.vwapAsk shouldEqual 15.5 / 10
