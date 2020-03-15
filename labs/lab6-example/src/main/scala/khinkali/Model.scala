@@ -7,8 +7,17 @@ case class CustomerOrder(dishes: List[Khinkali]) {
 }
 
 object CustomerOrder {
-  def generateOrder(rand: Random): CustomerOrder = {
-    CustomerOrder(List())
+  def generateOrder(rand: Random, customerConf: CustomerConf): CustomerOrder = {
+    CustomerOrder(
+      List.from(
+        (1 to customerConf.numOfDishesRange.inRange(rand))
+          .map[Khinkali](_ => Khinkali(
+              Stuffing.getStuffing(rand),
+              customerConf.numOfKhinkalisRange.inRange(rand)
+            )
+          )
+      )
+    )
   }
 }
 
@@ -22,6 +31,13 @@ object Stuffing {
   case object Beef extends Stuffing
   case object Mutton extends Stuffing
   case object CheeseAndMushrooms extends Stuffing
+
+  def getStuffing(random: Random): Stuffing =
+    random.between(1, 4) match {
+      case 1 => Beef
+      case 2 => Mutton
+      case 3 => CheeseAndMushrooms
+    }
 }
 
 sealed trait Result

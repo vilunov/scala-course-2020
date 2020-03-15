@@ -16,8 +16,10 @@ object Cafe {
       msg match {
         case Start =>
           val waiter = ctx.spawn(Waiter(), "Waiter")
-          val customers = (1 to cafeConf.numOfCustomers).map { i => ctx.spawn(Customer(waiter, cafeRand.nextInt(), cafeConf.customerConf), s"Customer$i")}
-          val chefs = (1 to cafeConf.numOfChefs).map { i => ctx.spawn(Chef(waiter), s"Chef$i")}
+          val customers = (1 to cafeConf.numOfCustomers)
+            .map { i => ctx.spawn(Customer(waiter, cafeRand.nextInt(), cafeConf.customerConf), s"Customer$i")}
+          val chefs = (1 to cafeConf.numOfChefs)
+            .map { i => ctx.spawn(Chef(waiter, cafeConf.chefConf, cafeRand.nextInt()), s"Chef$i")}
 
           waiter ! Waiter.SetChefs(chefs.toList)
 

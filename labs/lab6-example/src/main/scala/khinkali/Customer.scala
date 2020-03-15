@@ -24,7 +24,7 @@ object Customer {
     Behaviors.receive { (ctx, msg) =>
         msg match {
           case Start =>
-            val order = CustomerOrder.generateOrder(rand)
+            val order = CustomerOrder.generateOrder(rand, customerConf)
             val timeToOrder = customerConf.decisionTimeRange.inRange(rand).second
 
             ctx.log.info(s"Deciding what to order...")
@@ -36,7 +36,10 @@ object Customer {
       }
     }
 
-  def leaveOrder(waiter: ActorRef[Waiter.Command], rand: Random, customerConf: CustomerConf): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
+  def leaveOrder(waiter: ActorRef[Waiter.Command],
+                 rand: Random,
+                 customerConf: CustomerConf): Behavior[Command] =
+    Behaviors.receive { (ctx, msg) =>
     msg match {
       case LeaveOrder(order) =>
         ctx.log.info(s"Leaving order $order")
@@ -47,7 +50,7 @@ object Customer {
     }
   }
 
-  def waitForEat(rand: Random, customerConf: CustomerConf): Behavior[Command] = {
+  def waitForEat(rand: Random, customerConf: CustomerConf): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Eat =>
@@ -60,7 +63,6 @@ object Customer {
         case _ => Behaviors.same
       }
     }
-  }
 
   def waitToLeave: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {

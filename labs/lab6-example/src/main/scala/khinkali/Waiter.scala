@@ -3,7 +3,6 @@ package khinkali
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.util.Timeout
-import khinkali.Chef.TakeOrder
 
 import scala.util.{Failure, Success}
 import scala.concurrent.duration._
@@ -46,7 +45,7 @@ object Waiter {
               } else {
                 LookForChef(order, customer, chefs)
               }
-            case Failure(exception) =>
+            case Failure(_) =>
               Continue
             case _ => Continue
           }
