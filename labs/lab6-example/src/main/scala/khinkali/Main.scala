@@ -10,9 +10,8 @@ object Main extends App {
     case Left(failures) =>
       println("Can't read configs:")
       println(failures)
-    case Right(conf:khinkali.ServiceConf) =>
+    case Right(conf: khinkali.ServiceConf) =>
       val system: ActorSystem[Cafe.Command] = ActorSystem(Cafe(conf), "Cafe")
       system ! Cafe.Start
   }
-
 }

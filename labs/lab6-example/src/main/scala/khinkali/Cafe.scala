@@ -38,12 +38,12 @@ object Cafe {
 
   def waitTillAllEat(startTime: Long, countDown: Int): Behavior[Command] =
     Behaviors.receive {
-      (_, msg) =>
+      (ctx, msg) =>
         msg match {
           case CustomerLeave =>
             val newCounter = countDown - 1
             if (newCounter <= 0) {
-              println(s"Time taken: ${Duration(System.nanoTime() - startTime, NANOSECONDS).toSeconds} sec.")
+              ctx.log.info(s"Time taken: ${Duration(System.nanoTime() - startTime, NANOSECONDS).toSeconds} sec.")
               Behaviors.stopped
             }
             else

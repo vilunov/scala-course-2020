@@ -8,7 +8,10 @@ case class CustomerOrder(dishes: List[Khinkali]) {
 
 case class CookedOrder(orderId: Int, dishes: List[Khinkali])
 
-case class Order(orderId: Int, dishes: List[Khinkali])
+case class Order(orderId: Int, dishes: List[Khinkali]) {
+  def toCookedOrder: CookedOrder =
+    CookedOrder(orderId, dishes)
+}
 
 case class Khinkali(stuffing: Stuffing, amount: Int)
 

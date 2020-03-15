@@ -4,8 +4,14 @@ import pureconfig._
 import pureconfig.generic.auto._
 
 sealed trait Range
-case class IntRange(left:Int, right:Int) extends Range
-case class DoubleRange(left:Double, right: Double) extends Range
+
+case class IntRange(left: Int, right: Int) extends Range
+
+case class DoubleRange(left: Double, right: Double) extends Range {
+  def contain(value: Double): Boolean =
+    left <= value && value <= right
+}
+
 
 case class CustomerConf(
                          eatDelayRange: DoubleRange, // sec,
