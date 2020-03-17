@@ -21,7 +21,11 @@ object CustomerOrder {
   }
 }
 
-case class Order(orderId: Int, dishes: List[Khinkali])
+case class Order(orderId: Int, dishes: List[Khinkali]) {
+  def calculatePreparationTime(random: Random, preparationTimeRange: MyRange): Int = {
+    this.dishes.map(_.amount * preparationTimeRange.inRange(random)).sum
+  }
+}
 
 case class Khinkali(stuffing: Stuffing, amount: Int)
 

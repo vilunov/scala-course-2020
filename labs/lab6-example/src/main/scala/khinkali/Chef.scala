@@ -22,7 +22,7 @@ object Chef {
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case TakeOrder(order, replyTo, customer) =>
-          val timeToCook = chefConf.cookingTimeRange.inRange(rand)
+          val timeToCook = order.calculatePreparationTime(rand, chefConf.cookingTimeRange)
 
           ctx.log.info(s"Chef takes the order {} for customer {}", order.orderId, customer)
           ctx.scheduleOnce(timeToCook.second, ctx.self, FinishOrder(order.orderId, customer))
