@@ -22,4 +22,5 @@ package object ord {
       O.partialCompare(left, right).fold(false)(i => i == OrdResult.Greater || i == OrdResult.Equal)
   }
 
+
 }
