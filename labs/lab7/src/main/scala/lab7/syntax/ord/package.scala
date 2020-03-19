@@ -1,6 +1,6 @@
-package dogs.syntax
+package lab7.syntax
 
-import dogs.{OrdResult, PartialEquality, PartialOrd}
+import lab7.{OrdResult, PartialEquality, PartialOrd}
 
 package object ord {
 

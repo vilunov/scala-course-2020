@@ -1,4 +1,4 @@
-package dogs
+package lab7
 
 sealed abstract class OrdResult {
   def inverse: OrdResult
@@ -18,13 +18,14 @@ object OrdResult {
     override val inverse: OrdResult = Less
   }
 
-  private[dogs] def fromInt(res: Int): OrdResult = res match {
+  private[lab7] def fromInt(res: Int): OrdResult = res match {
     case i if i < 0 => OrdResult.Less
     case 0 => OrdResult.Equal
     case _ => OrdResult.Greater
   }
 
 }
+
 
 trait PartialEquality[-T] {
   def equal(left: T, right: T): Boolean
@@ -43,6 +44,7 @@ object Equality {
   def apply[T](implicit instance: Equality[T]): Equality[T] = instance
 }
 
+
 trait PartialOrd[-T] extends PartialEquality[T] {
   def partialCompare(left: T, right: T): Option[OrdResult]
 
@@ -58,6 +60,7 @@ object PartialOrd {
     if (left.isNaN || right.isNaN) None else Some(OrdResult.fromInt(left.compareTo(right)))
 }
 
+
 trait Ord[-T] extends PartialOrd[T] with Equality[T] {
   final override def partialCompare(left: T, right: T): Some[OrdResult] = Some(compare(left, right))
 
@@ -71,4 +74,5 @@ object Ord {
 
   implicit val intOrd: Ord[Int] = (left, right) => OrdResult.fromInt(left.compareTo(right))
   implicit val longOrd: Ord[Long] = (left, right) => OrdResult.fromInt(left.compareTo(right))
+  implicit val stringOrd: Ord[String] = (left, right) => OrdResult.fromInt(left.compareTo(right))
 }
