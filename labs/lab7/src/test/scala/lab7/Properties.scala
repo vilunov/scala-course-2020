@@ -2,7 +2,8 @@ package lab7
 
 import org.scalacheck.Prop._
 import org.scalacheck.{Arbitrary, Properties}
-
+import lab7.syntax.ord.SyntaxPartialOrder
+import lab7.syntax.ord.SyntaxPartialEquality
 
 abstract class EqualityProperties[T: Arbitrary](name: String) extends PartialEqualityProperties[T](name) {
   def instance: Equality[T]
@@ -25,31 +26,20 @@ abstract class PartialEqualityProperties[T: Arbitrary](name: String) extends Pro
 }
 
 abstract class PartialOrdProperties[T: Arbitrary](name: String) extends PartialEqualityProperties(name) {
-  def instance: PartialOrd[T]
+  implicit def instance: PartialOrd[T]
 
   property("partial ordering is reflexive") = forAll { a: T =>
-    instance.partialCompare(a, a) match {
-      case Some(OrdResult.Greater) => false
-      case None => false
-      case _ => true
-    }
+    a >= a
   }
 
   property("partial ordering is antisymmetric") = forAll { (left: T, right: T) =>
-    instance.partialCompare(left, right) match {
-      case Some(OrdResult.Equal) =>
-        val a = instance.partialCompare(right, left)
-        !a.contains(OrdResult.Greater) && !a.contains(OrdResult.Less)
-      case _ => true
-    }
+    if (left >= right && right >= left) left is right else true
   }
 
   property("partial ordering is transitive") = forAll { (a: T, b: T, c: T) =>
     instance.partialCompare(a, b) match {
-      case None => true
-      case ab => // Some(Any)
+      case ab =>
         instance.partialCompare(b, c) match {
-          case None => true
           case bc if ab == bc =>
             instance.partialCompare(a, c) == ab
           case _ => true
