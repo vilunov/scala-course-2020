@@ -60,7 +60,11 @@ object Monoid {
     override def combine(a: Map[K, V], b: Map[K, V]): Map[K, V] = Semigroup.mapSemigroup[K, V].combine(a, b)
   }
 
-  implicit def equalityMonoid[T]: Monoid[Equality[T]] = ???
+  implicit def equalityMonoid[T]: Monoid[Equality[T]] = new Monoid[Equality[T]] {
+    override def unit: Equality[T] = (_, _) => true
+    override def combine(a: Equality[T], b: Equality[T]): Equality[T] = (l, r) =>
+      a.equal(l, r) && b.equal(l, r)
+  }
 }
 
 trait CommutativeSemigroup[T] extends Semigroup[T]
