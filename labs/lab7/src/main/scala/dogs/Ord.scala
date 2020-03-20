@@ -71,4 +71,5 @@ object Ord {
 
   implicit val intOrd: Ord[Int] = (left, right) => OrdResult.fromInt(left.compareTo(right))
   implicit val longOrd: Ord[Long] = (left, right) => OrdResult.fromInt(left.compareTo(right))
+  implicit val StringOrd: Ord[String] = (left, right) => OrdResult.fromInt(left.compareTo(right))
 }
