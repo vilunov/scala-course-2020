@@ -16,7 +16,15 @@ abstract class SemigroupProperties[T: Arbitrary](name: String)(implicit instance
 abstract class CommutativeSemigroupProperties[T: Arbitrary](name: String)(implicit instance: CommutativeSemigroup[T])
   extends SemigroupProperties[T](name) {
 
-  property("Commutativity") = forAll {
-    (a: T, b: T) => instance.combine(a, b) == instance.combine(b, a)
+  property("Commutativity") = forAll { (a: T, b: T) =>
+    instance.combine(a, b) == instance.combine(b, a)
+  }
+}
+
+abstract class MonoidProperties[T: Arbitrary](name: String)(implicit instance: Monoid[T])
+  extends Properties(name) {
+
+  property("Monoid has unit") = forAll { (a: T) =>
+    instance.combine(instance.neutral, a) == a
   }
 }

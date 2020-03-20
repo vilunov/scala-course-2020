@@ -20,3 +20,12 @@ object DoubleCommutativeSemigroupSpec extends CommutativeSemigroupProperties[Dou
 object FloatCommutativeSemigroupSpec extends CommutativeSemigroupProperties[Float]("Float CommutativeSemigroup spec")
 
 object LongCommutativeSemigroupSpec extends CommutativeSemigroupProperties[Long]("Long CommutativeSemigroup spec")
+
+
+object IntMonoidSpec extends MonoidProperties[Int]("Int monoid spec")
+
+object LongMonoidSpec extends MonoidProperties[Long]("Long monoid spec")
+
+object FloatMonoidSpec extends MonoidProperties[Float]("Float monoid spec")
+
+object DoubleMonoidSpec extends MonoidProperties[Double]("Double monoid spec")

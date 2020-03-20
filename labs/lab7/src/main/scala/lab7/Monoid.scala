@@ -19,7 +19,7 @@ object Semigroup {
     l ++ r ++ updates
   }
 
-  implicit def flattenCombine[T]: Semigroup[List[T]] = (l, r) => l ++ r
+  implicit def listCombine[T]: Semigroup[List[T]] = (l, r) => l ++ r
 }
 
 
@@ -83,7 +83,7 @@ object Monoid {
   implicit def listMonoid[T]: Monoid[List[T]] = new Monoid[List[T]] {
     override def neutral: List[T] = List.empty
 
-    override def combine(l: List[T], r: List[T]): List[T] = Semigroup.flattenCombine.combine(l, r)
+    override def combine(l: List[T], r: List[T]): List[T] = Semigroup.listCombine.combine(l, r)
   }
 }
 
