@@ -74,7 +74,7 @@ object Monoid {
   }
 
   implicit def mapMonoid[K, V: Semigroup]: Monoid[Map[K, V]] = new Monoid[Map[K, V]] {
-    override def neutral: Map[K, V] = Map[K, V]()
+    override def neutral: Map[K, V] = Map.empty
 
     override def combine(l: Map[K, V], r: Map[K, V]): Map[K, V] =
       Semigroup.mapCombine[K, V].combine(l, r)
@@ -116,7 +116,7 @@ object CommutativeMonoid {
   }
 
   implicit def mapCommutativeMonoid[K, V: CommutativeSemigroup]: CommutativeMonoid[Map[K, V]] = new CommutativeMonoid[Map[K, V]] {
-    override def neutral: Map[K, V] = Map[K, V]()
+    override def neutral: Map[K, V] = Map.empty
 
     override def combine(l: Map[K, V], r: Map[K, V]): Map[K, V] =
       CommutativeSemigroup.mapCombine[K, V].combine(l, r)
