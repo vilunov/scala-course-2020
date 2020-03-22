@@ -59,9 +59,48 @@ object Monoid {
 
 trait CommutativeSemigroup[T] extends Semigroup[T]
 
+object CommutativeSemigroup {
+  // summoner
+  def apply[T](implicit commutativeSemigroup: CommutativeSemigroup[T]): Semigroup[T] = commutativeSemigroup
+
+  // type instances
+  implicit val intComSemigroup: CommutativeSemigroup[Int] = (left, right) => left + right
+  implicit val longComSemigroup: CommutativeSemigroup[Long] = (left, right) => left + right
+  implicit val floatComSemigroup: CommutativeSemigroup[Float] = (left, right) => left + right
+  implicit val doubleComSemigroup: CommutativeSemigroup[Double] = (left, right) => left + right
+}
+
 trait CommutativeMonoid[T] extends CommutativeSemigroup[T] with Monoid[T]
 
 object CommutativeMonoid {
-  implicit def mapCommutativeMonoid[K, V: CommutativeSemigroup]: CommutativeMonoid[Map[K, V]] = ???
+  // summoner
+  def apply[T](implicit commutativeMonoid: CommutativeMonoid[T]): CommutativeMonoid[T] = commutativeMonoid
+
+  // type instances
+  implicit val intComMonoid: CommutativeMonoid[Int] = new CommutativeMonoid[Int] {
+    override def combine(left: Int, right: Int): Int = left + right
+    override def unit: Int = 0
+  }
+
+  implicit val longComMonoid: CommutativeMonoid[Long] = new CommutativeMonoid[Long] {
+    override def combine(left: Long, right: Long): Long = left + right
+    override def unit: Long = 0
+  }
+
+  implicit val floatComMonoid: CommutativeMonoid[Float] = new CommutativeMonoid[Float] {
+    override def combine(left: Float, right: Float): Float = left + right
+    override def unit: Float = 0
+  }
+
+  implicit val doubleComMonoid: CommutativeMonoid[Double] = new CommutativeMonoid[Double] {
+    override def combine(left: Double, right: Double): Double = left + right
+    override def unit: Double = 0
+  }
+
+  implicit def mapCommutativeMonoid[K, V: CommutativeSemigroup]: CommutativeMonoid[Map[K, V]] = new CommutativeMonoid[Map[K, V]] {
+    override def unit: Map[K, V] = Map.empty
+
+    override def combine(left: Map[K, V], right: Map[K, V]): Map[K, V] = ???
+  }
 }
 
