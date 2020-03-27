@@ -77,7 +77,7 @@ object Monad {
   }
 
   implicit def futureMonad(implicit ec: ExecutionContext): Monad[Future] = new Monad[Future] {
-    override def pure[T](v: T): Future[T] = Future(v)
+    override def pure[T](v: T): Future[T] = Future.successful(v)
 
     override def flatMap[A, B](f: A => Future[B])(v: Future[A]): Future[B] =
       v.flatMap(f)
