@@ -2,6 +2,8 @@ package lab9
 
 import scala.concurrent.{ExecutionContext, Future}
 
+case class FutureWrapper[-I, +O](param: I => Future[O])
+
 trait Monad[F[+_]] extends Functor[F] {
   def pure[T](v: T): F[T]
   def flatMap[A, B](f: A => F[B], v: F[A]): F[B]
@@ -56,4 +58,10 @@ object Monad {
     override def flatMap[A, B](f: A => Future[B], v: Future[A]): Future[B] = v.flatMap(f)
   }
 
+  implicit def futureMonadWrapper[I](implicit context: ExecutionContext): Monad[FutureWrapper[I, +*]] = new Monad[FutureWrapper[I, +*]] {
+    override def pure[T](v: T): FutureWrapper[I, T] = FutureWrapper(_ => Future.successful(v))
+
+    override def flatMap[A, B](f: A => FutureWrapper[I, B], v: FutureWrapper[I, A]): FutureWrapper[I, B] =
+      FutureWrapper(a => v.param(a).flatMap(b => f(b).param(a)))
+  }
 }
