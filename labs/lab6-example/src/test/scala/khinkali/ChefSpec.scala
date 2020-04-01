@@ -5,6 +5,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 class ChefSpec extends AnyFlatSpec {
   "Chef" should "???" in {
-    val testKit = BehaviorTestKit(Chef())
+    //val testKit = BehaviorTestKit(Chef(cfg, rng))
   }
 }
