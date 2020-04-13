@@ -1,0 +1,6 @@
+https://www.bbc.com/news/world-51235105
+https://www.bbc.co.uk/news/world-us-canada-52239261
+https://medium.com/se-notes-by-alexey-novakov/scala-fs2-handle-broken-csv-lines-8d8c4defcd88
+https://www.google.com
+broken-url
+http://feeds.reuters.com/~r/reuters/topNews/~3/0zHaZVCwv4M/spain-loosens-coronavirus-lockdown-but-death-toll-races-past-17000-idUSKCN21V0PD
