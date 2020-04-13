@@ -6,3 +6,5 @@ target/
 
 # Other
 .DS_Store
+hidden.conf
+impl/
