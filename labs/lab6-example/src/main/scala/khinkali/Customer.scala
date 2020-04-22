@@ -2,45 +2,69 @@ package khinkali
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.util.Timeout
 
+import scala.util.{Failure, Random, Success}
 import scala.concurrent.duration._
 
 object Customer {
   sealed trait Command
 
-  case object Start extends Command
+  case object Start                           extends Command
   case class LeaveOrder(order: CustomerOrder) extends Command
-  case object Eat extends Command
-  case object Leave extends Command
+  case object Eat                             extends Command
+  case object Leave                           extends Command
 
-  def apply(waiter: ActorRef[Waiter.Command], order: CustomerOrder): Behavior[Command] =
-    start(order, waiter)
+  implicit val timeout: Timeout = Timeout(1.second)
 
-  def start(order: CustomerOrder, waiter: ActorRef[Waiter.Command]): Behavior[Command] =
+  def apply(
+      waiter: ActorRef[Waiter.Command],
+      customerConfig: CustomerConfig,
+      seed: Long
+  ): Behavior[Command] = {
+    val random: Random = new Random(seed)
+    start(customerConfig, waiter, random)
+  }
+
+  def start(
+      customerConfig: CustomerConfig,
+      waiter: ActorRef[Waiter.Command],
+      random: Random
+  ): Behavior[Command] =
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case Start =>
-          ctx.scheduleOnce(1.second, ctx.self, LeaveOrder(order))
-          leaveOrder(waiter)
+          ctx.scheduleOnce(
+            customerConfig.orderDecisionTimeBoundaries.randomWithin(random).second,
+            ctx.self,
+            LeaveOrder(
+              CustomerOrder.generateOrder(
+                random,
+                customerConfig
+              )
+            )
+          )
+          leaveOrder(customerConfig, waiter, random)
         case _ => Behaviors.same
       }
     }
 
-  def leaveOrder(waiter: ActorRef[Waiter.Command]): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
-    msg match {
-      case LeaveOrder(order) =>
-        ctx.log.info(s"Leaving order $order")
-        waiter ! ???
-        waitForEat
-      case _ => Behaviors.same
+  def leaveOrder(customerConfig: CustomerConfig, waiter: ActorRef[Waiter.Command], random: Random): Behavior[Command] =
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
+        case LeaveOrder(order) =>
+          ctx.log.info(s"Leaving order $order")
+          waiter ! Waiter.AcceptOrder(order, ctx.self)
+          waitForEat(customerConfig, random)
+        case _ => Behaviors.same
+      }
     }
-  }
 
-  def waitForEat: Behavior[Command] = Behaviors.receive { (ctx, msg) =>
+  def waitForEat(customerConfig: CustomerConfig, random: Random): Behavior[Command] = Behaviors.receive { (ctx, msg) =>
     msg match {
       case Eat =>
         ctx.log.info(s"Now eating")
-        ctx.scheduleOnce(1.second, ctx.self, Leave)
+        ctx.scheduleOnce(customerConfig.eatingTimeBoundaries.randomWithin(random).second, ctx.self, Leave)
         waitToLeave
       case _ => Behaviors.same
     }
