@@ -1,5 +1,7 @@
 package khinkali
 
+import akka.actor.typed.ActorRef
+
 case class CustomerOrder(dishes: List[Khinkali]) {
   def toOrder(id: Int): Order = Order(id, dishes)
 }
@@ -17,6 +19,6 @@ object Stuffing {
 
 sealed trait Result
 object Result {
-  case object Ok extends Result
-  case object Busy extends Result
+  case class Ok(ordered:CustomerOrder, cus :ActorRef[Customer.Eat.type], chef: ActorRef[Chef.Command]) extends Result
+  case class Busy(ordered:CustomerOrder, cus :ActorRef[Customer.Eat.type ]) extends Result
 }
