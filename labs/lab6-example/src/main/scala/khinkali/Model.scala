@@ -8,11 +8,10 @@ case class Order(orderId: Int, dishes: List[Khinkali])
 case class Khinkali(stuffing: Stuffing, amount: Int)
 
 sealed trait Stuffing
-
 object Stuffing {
-  case object Beef extends Stuffing
-  case object Mutton extends Stuffing
-  case object CheeseAndMushrooms extends Stuffing
+  case object Beef extends Stuffing { override val toString = "Beef" }
+  case object Mutton extends Stuffing { override val toString = "Mutton" }
+  case object CheeseAndMushrooms extends Stuffing { override val toString = "CheeseAndMushrooms" }
 }
 
 sealed trait Result
