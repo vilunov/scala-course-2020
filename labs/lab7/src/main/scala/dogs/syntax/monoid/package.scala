@@ -4,18 +4,16 @@ import dogs.{Monoid, Semigroup}
 
 package object monoid {
 
+  implicit def semigroupFromMonoid[T](implicit M: Monoid[T]): Semigroup[T] = M
+
   implicit class SyntaxSemigroupMonoid[T](val left: T) extends AnyVal {
-    def |+|(right: T)(implicit S: Semigroup[T]): T = ???
+    def |+|(right: T)(implicit S: Semigroup[T]): T = S.combine(left, right)
   }
 
   implicit class SyntaxIterable[T](val inner: Iterable[T]) extends AnyVal {
-    def reduceMonoid(implicit M: Monoid[T]): T = ???
-
-    def foldSemigroup(start: T)(implicit S: Semigroup[T]): T = ???
-
-    def foldLeftSemigroup(start: T)(implicit S: Semigroup[T]): T = ???
-
-    def foldRightSemigroup(start: T)(implicit S: Semigroup[T]): T = ???
+    def reduceMonoid(implicit M: Monoid[T]): T = inner.reduceOption(M.combine).getOrElse(M.unit)
+    def foldSemigroup(start: T)(implicit S: Semigroup[T]): T = inner.fold(start)(S.combine)
+    def foldLeftSemigroup(start: T)(implicit S: Semigroup[T]): T = inner.foldLeft(start)(S.combine)
+    def foldRightSemigroup(start: T)(implicit S: Semigroup[T]): T = inner.foldRight(start)(S.combine)
   }
-
 }

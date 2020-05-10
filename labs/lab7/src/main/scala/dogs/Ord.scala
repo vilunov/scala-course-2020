@@ -71,4 +71,18 @@ object Ord {
 
   implicit val intOrd: Ord[Int] = (left, right) => OrdResult.fromInt(left.compareTo(right))
   implicit val longOrd: Ord[Long] = (left, right) => OrdResult.fromInt(left.compareTo(right))
-}
+  implicit val stringOrd: Ord[String] = (left, right) => OrdResult.fromInt(left.compareTo(right))
+  implicit def listOrd[T : Ord]: Ord[List[T]] = new Ord[List[T]] {
+    override def compare(left: List[T], right: List[T]): OrdResult = {
+      val ord: Ord[T] = implicitly[Ord[T]]
+      for ((l, r) <- left.zip(right)) {
+        val side = ord.compare(l, r)
+
+        if (side != OrdResult.Equal)
+          return side
+      }
+
+      OrdResult.Equal
+    }
+  }
+ }
