@@ -1,4 +1,4 @@
-package dogs
+package lab7
 
 object Main {
   val kek: Either[Int, Nothing] = Left(1)

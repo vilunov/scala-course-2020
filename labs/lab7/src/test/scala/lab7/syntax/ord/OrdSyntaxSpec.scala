@@ -1,6 +1,6 @@
-package dogs.syntax.ord
+package lab7.syntax.ord
 
-import dogs._
+import lab7._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

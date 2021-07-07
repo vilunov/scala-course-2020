@@ -14,8 +14,8 @@ class EntrySpec extends AnyFlatSpec with Matchers with OptionValues {
     val result = Entry.fromLine(input).value
     result.timestamp shouldBe LocalDateTime.of(2020, 2, 9, 19, 34, 20)
     result.symbol shouldBe "XBTUSD"
-    result.bids.head shouldBe (10112.0, 52519)
-    result.asks.last shouldBe (10087.5, 193216)
+    result.asks.head shouldBe (10112.0, 52519)
+    result.bids.last shouldBe (10087.5, 193216)
   }
 
   it should "return None when the timestamp is incorrect" in {

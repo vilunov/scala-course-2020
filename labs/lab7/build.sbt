@@ -1,4 +1,4 @@
-name := "lab8"
+name := "lab7"
 
 version := "0.1"
 
